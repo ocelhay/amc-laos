@@ -1,0 +1,69 @@
+---
+title: "Prototype for AMC Laos shiny app"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# About
+
+This document contains development code for the AMC Laos shiny app.
+
+# Preparation
+
+```{r}
+library(janitor)
+library(readxl)
+library(tidyverse)
+library(validate)
+```
+
+
+# Data
+
+## Data Import
+
+```{r data}
+amc_dta <- read_excel(path = "./www/data/AMC_data_2021-03-10.xlsx")
+amc_dta <- clean_names(amc_dta)
+
+# sheet ACT: removed some content in columns outside the table.
+amc_dic <- list(
+  act = read_excel(path = "./www/data/AMC_Dictionary_2021-03-10.xlsx", sheet = "ACT") %>% clean_names(),
+  act3 = read_excel(path = "./www/data/AMC_Dictionary_2021-03-10.xlsx", sheet = "ACT3 & ATC name"),
+  atc5 = read_excel(path = "./www/data/AMC_Dictionary_2021-03-10.xlsx", sheet = "ACT3 & 5, substance and AWaRe") %>% clean_names()
+)
+```
+
+
+## Data Check
+
+```{r}
+# Columns should be predicatbles
+all(names(amc_dta) == c("provinces", "data_collecting_year", "atc5", "route", "dad", 
+                        "act3", "a_wa_re", "substance", "act_3_name", "dad_percent"))
+
+
+valid_atc5  <- unique(amc_dic$atc5$atc5)
+
+rules <- validator(
+  is.character(provinces),
+  is.numeric(data_collecting_year),
+  is.character(atc5),
+  is.character(route),
+  is.numeric(dad),
+  is.character(act3),
+  is.character(a_wa_re),
+  is.character(substance),
+  is.character(act_3_name),
+  is.numeric(dad_percent),
+  atc5 %in% valid_atc5
+)
+
+confront(amc_dta, rules)
+```
+
+
+# Visualisations
