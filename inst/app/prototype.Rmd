@@ -13,9 +13,14 @@ This document contains development code for the AMC Laos shiny app.
 
 # Preparation
 
-```{r}
+```{r packages}
+library(DT)
+library(glue)
+library(highcharter)
 library(janitor)
+library(leaflet)
 library(readxl)
+library(rgdal)
 library(tidyverse)
 library(validate)
 ```
@@ -32,21 +37,28 @@ amc_dta <- clean_names(amc_dta)
 # sheet ACT: removed some content in columns outside the table.
 amc_dic <- list(
   act = read_excel(path = "./www/data/AMC_Dictionary_2021-03-10.xlsx", sheet = "ACT") %>% clean_names(),
-  act3 = read_excel(path = "./www/data/AMC_Dictionary_2021-03-10.xlsx", sheet = "ACT3 & ATC name"),
+  act3 = read_excel(path = "./www/data/AMC_Dictionary_2021-03-10.xlsx", sheet = "ACT3 & ATC name") %>% clean_names(),
   atc5 = read_excel(path = "./www/data/AMC_Dictionary_2021-03-10.xlsx", sheet = "ACT3 & 5, substance and AWaRe") %>% clean_names()
 )
+
+coords <- read.csv("./www/data/hospital_geo_coordinates.csv", stringsAsFactors = FALSE)
+
+shp_lao_provinces <- readOGR("./www/data/shapefiles/provinces.shp")
 ```
 
 
 ## Data Check
 
-```{r}
+```{r data-check}
 # Columns should be predicatbles
 all(names(amc_dta) == c("provinces", "data_collecting_year", "atc5", "route", "dad", 
                         "act3", "a_wa_re", "substance", "act_3_name", "dad_percent"))
 
 
 valid_atc5  <- unique(amc_dic$atc5$atc5)
+valid_act3  <- unique(amc_dic$act3$code)
+valid_name <- unique(amc_dic$act3$name)
+valid_substance  <- unique(amc_dic$atc5$substance)
 
 rules <- validator(
   is.character(provinces),
@@ -59,11 +71,164 @@ rules <- validator(
   is.character(substance),
   is.character(act_3_name),
   is.numeric(dad_percent),
-  atc5 %in% valid_atc5
+  provinces %in% c("Luang Natha", "Xiengkhuang", "Salavan"),
+  atc5 %in% valid_atc5,
+  route %i% c("O", "P", "R"),
+  act3 %in% valid_act3,
+  a_wa_re %in% c("Access", "Watch"),
+  substance %in% valid_substance,
+  act_3_name %in% valid_name,
+  in_range(dad_percent, min = 0, max = 100)
 )
 
 confront(amc_dta, rules)
+summary(confront(amc_dta, rules))
+
+# Issue with three substances ----
+unique(amc_dta$substance)[! unique(amc_dta$substance) %in% valid_substance]
+# "Choramphenicol" instead of "Chloramphenicol"
+# "Amoxicillin and enzyme inhibitor"  "Sulfamethoxazole and trimethoprim" 
+
+amc_dta %>% 
+  group_by(provinces) %>%
+  summarise(add_pct = sum(dad_percent))
+```
+
+
+## Data Wrangling
+
+```{r}
+amc_dta <- amc_dta %>%
+  mutate(hospital = case_when(
+    provinces == "Luang Natha" ~ "Luang Namtha Provincial Hospital",
+    provinces == "Xiengkhuang" ~ "Xiengkhuang Provincial Hospital",
+    provinces == "Salavan" ~ "Salavan Provincial Hospital"
+  ))
 ```
 
 
 # Visualisations
+
+Map of hospitals:
+
+```{r}
+dta <- amc_dta %>%
+  group_by(hospital) %>%
+  summarise(nb_year = n_distinct(data_collecting_year)) %>%
+  mutate(label = glue("{hospital}: {nb_year} year(s) of AMC data"))
+
+dta <- left_join(dta, coords, by = c("hospital" = "hospcd"))
+
+leaflet(data = dta) %>% 
+  addTiles() %>%
+  addPolygons(data = shp_lao_provinces, fill = FALSE, dashArray = 1, weight = 0, color='black') %>%
+  addMarkers(lng = ~lon, lat = ~lat, label = ~label, labelOptions = labelOptions(noHide = T))
+```
+
+Number of consumed antimicrobials by hospital by year:
+
+```{r}
+dta <- amc_dta %>%
+  group_by(data_collecting_year, hospital) %>%
+  summarise(consum = round(sum(dad), 1), .groups = "drop")
+
+hchart(dta, type = "column", hcaes(x = data_collecting_year, y = consum, group = hospital)) %>%
+  hc_yAxis(title = "Total DAD") %>% 
+  hc_xAxis(title = "Year, Hospital") %>%
+  hc_tooltip(headerFormat = "", pointFormat = "{point.consum} DAD<br> {point.hospital} {point.data_collecting_year}")
+```
+
+
+Antimicrobial consumptions based on AWaRE group:
+
+```{r}
+dta <- amc_dta %>%
+  group_by(a_wa_re) %>%
+  summarise(tot = sum(dad))
+
+
+highchart() %>%
+  hc_add_series(dta, "pie", hcaes(name = a_wa_re, y = tot),
+                dataLabels = list(enabled = TRUE, style = list(fontSize = "13px"),
+                                  format = '{point.name} <br>{point.percentage:.0f} %')) %>%
+  hc_title(text = "AWaRe Group") %>%
+  hc_tooltip(headerFormat = "", pointFormat = "{point.tot:.1f} DAD")
+```
+
+
+Route of administration:
+
+```{r}
+dta <- amc_dta %>%
+  group_by(route) %>%
+  summarise(tot = sum(dad))
+
+
+highchart() %>%
+  hc_add_series(dta, "pie", hcaes(name = route, y = tot),
+                dataLabels = list(enabled = TRUE, style = list(fontSize = "13px"),
+                                  format = '{point.name} <br>{point.percentage:.2f} %')) %>%
+  hc_title(text = "Route of administration") %>%
+  hc_tooltip(headerFormat = "", pointFormat = "{point.tot:.1f} DAD")
+```
+
+Common consumed antimicrobial group:
+
+```{r}
+dta <- amc_dta %>%
+  group_by(act_3_name) %>%
+  summarise(tot = sum(dad)) %>%
+  ungroup() %>%
+  arrange(desc(tot)) %>%
+  mutate(color = colors_ipd_opd[["OPD"]]) %>%
+  mutate(total_presciptions = sum(n)) %>%
+  mutate(pct = round(100*n / total_presciptions, 1))
+
+hchart(dta, type = "column", hcaes(x = diasite, y = pct, color = color)) %>%
+  hc_tooltip(headerFormat = "", pointFormat = "{point.diasite}: {point.pct}% <br>({point.n} of {point.total_presciptions} outpatient prescriptions)") %>%
+  hc_title(text = i18n$t("Outpatient")) %>%
+  hc_yAxis(title = list(text = i18n$t("% of Antimicrobial Prescriptions"))) %>%
+  hc_xAxis(title = "") %>%
+  hc_chart(marginLeft = 150, marginBottom = 150)
+```
+
+Common consumed antimicrobial agents:
+
+```{r}
+dta <- amc_dta %>%
+  group_by(substance) %>%
+  summarise(consum = round(sum(dad), 1), .groups = "drop") %>%
+  arrange(desc(consum))
+
+hchart(dta, type = "column", hcaes(x = substance, y = consum)) %>%
+  hc_yAxis(title = "Total DAD") %>% 
+  hc_xAxis(title = "Substance") %>%
+  hc_tooltip(headerFormat = "", pointFormat = "{point.consum} DAD")
+```
+
+```{r}
+dta <- amc_dta %>%
+  group_by(act_3_name) %>%
+  summarise(consum = round(sum(dad), 1), .groups = "drop") %>%
+  arrange(desc(consum))
+
+hchart(dta, type = "column", hcaes(x = act_3_name, y = consum)) %>%
+  hc_yAxis(title = "Total DAD") %>% 
+  hc_xAxis(title = "ACT3 - Antibiotic Group") %>%
+  hc_tooltip(headerFormat = "", pointFormat = "{point.consum} DAD")
+```
+
+
+List of antimicrobial consumptions:
+
+```{r}
+dta <- amc_dta %>%
+  group_by(act_3_name, substance, route, a_wa_re) %>%
+  summarise(consum = round(sum(dad), 1), .groups = "drop") %>%
+  arrange(desc(consum))
+
+datatable(dta)
+```
+
+
+
