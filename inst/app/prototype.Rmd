@@ -177,19 +177,13 @@ Common consumed antimicrobial group:
 ```{r}
 dta <- amc_dta %>%
   group_by(act_3_name) %>%
-  summarise(tot = sum(dad)) %>%
-  ungroup() %>%
-  arrange(desc(tot)) %>%
-  mutate(color = colors_ipd_opd[["OPD"]]) %>%
-  mutate(total_presciptions = sum(n)) %>%
-  mutate(pct = round(100*n / total_presciptions, 1))
+  summarise(consum = round(sum(dad), 1), .groups = "drop") %>%
+  arrange(desc(consum))
 
-hchart(dta, type = "column", hcaes(x = diasite, y = pct, color = color)) %>%
-  hc_tooltip(headerFormat = "", pointFormat = "{point.diasite}: {point.pct}% <br>({point.n} of {point.total_presciptions} outpatient prescriptions)") %>%
-  hc_title(text = i18n$t("Outpatient")) %>%
-  hc_yAxis(title = list(text = i18n$t("% of Antimicrobial Prescriptions"))) %>%
-  hc_xAxis(title = "") %>%
-  hc_chart(marginLeft = 150, marginBottom = 150)
+hchart(dta, type = "column", hcaes(x = act_3_name, y = consum)) %>%
+  hc_yAxis(title = "Total DAD") %>% 
+  hc_xAxis(title = "ACT3 - Antibiotic Group") %>%
+  hc_tooltip(headerFormat = "", pointFormat = "{point.consum} DAD")
 ```
 
 Common consumed antimicrobial agents:
@@ -206,17 +200,7 @@ hchart(dta, type = "column", hcaes(x = substance, y = consum)) %>%
   hc_tooltip(headerFormat = "", pointFormat = "{point.consum} DAD")
 ```
 
-```{r}
-dta <- amc_dta %>%
-  group_by(act_3_name) %>%
-  summarise(consum = round(sum(dad), 1), .groups = "drop") %>%
-  arrange(desc(consum))
 
-hchart(dta, type = "column", hcaes(x = act_3_name, y = consum)) %>%
-  hc_yAxis(title = "Total DAD") %>% 
-  hc_xAxis(title = "ACT3 - Antibiotic Group") %>%
-  hc_tooltip(headerFormat = "", pointFormat = "{point.consum} DAD")
-```
 
 
 List of antimicrobial consumptions:

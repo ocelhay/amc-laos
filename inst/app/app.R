@@ -44,6 +44,14 @@ amc_dta <- amc_dta %>%
     provinces == "Salavan" ~ "Salavan Provincial Hospital"
   ))
 
+# Variables for filters ----
+unique_year <- unique(amc_dta$data_collecting_year)
+unique_hospital <- unique(amc_dta$hospital)
+unique_act_3_name <- unique(amc_dta$act_3_name)
+unique_substance <- unique(amc_dta$substance)
+unique_route <- unique(amc_dta$route)
+unique_a_wa_re <- unique(amc_dta$a_wa_re)
+
 # Define UI ----
 ui <- fluidPage(
   shiny.i18n::usei18n(i18n),
@@ -51,7 +59,7 @@ ui <- fluidPage(
   theme = shinytheme("flatly"),
   shinyWidgets::chooseSliderSkin('HTML5'),
   includeCSS("./www/styles.css"),
-
+  
   fluidRow(
     # Sidebar ----
     column(width = 3,
@@ -69,12 +77,33 @@ ui <- fluidPage(
                             div(id = "floatingfilter",
                                 div(class = "box_outputs",
                                     h4(icon("filter"), i18n$t("Filter Data:")),
-                                    p("Placeholder for month-year filter"),
-                                    p("Placeholder for hospital filter"),
-                                    p("Placeholder for ATC3 name filter"),
-                                    p("Placeholder for Antimicrobial agent filter"),
-                                    p("Placeholder for Route filter"),
-                                    p("Placeholder for AWaRE filter"),
+                                    
+                                    prettyCheckboxGroup(inputId = "filter_year", label = i18n$t("Years:"), 
+                                                        status = "primary", inline = TRUE,
+                                                        choices = unique_year, 
+                                                        selected = unique_year),
+                                    prettyCheckboxGroup(inputId = "filter_hospital", label = i18n$t("Years:"), 
+                                                        status = "primary", inline = TRUE,
+                                                        choices = unique_hospital, 
+                                                        selected = unique_hospital),
+                                    pickerInput(inputId = "filter_act_3_name", label = i18n$t("ACT 3:"), multiple = TRUE,
+                                                choices = unique_act_3_name, selected = unique_act_3_name,
+                                                options = list(
+                                                  `actions-box` = TRUE, `deselect-all-text` = "None...",
+                                                  `select-all-text` = "Select All", `none-selected-text` = "None Selected")),
+                                    pickerInput(inputId = "filter_substance", label = i18n$t("Substance:"), multiple = TRUE,
+                                                choices = unique_substance, selected = unique_substance,
+                                                options = list(
+                                                  `actions-box` = TRUE, `deselect-all-text` = "None...",
+                                                  `select-all-text` = "Select All", `none-selected-text` = "None Selected")),
+                                    prettyCheckboxGroup(inputId = "filter_route", label = i18n$t("Route:"), 
+                                                        status = "primary", inline = TRUE,
+                                                        choices = unique_route, 
+                                                        selected = unique_route),
+                                    prettyCheckboxGroup(inputId = "filter_a_wa_re", label = i18n$t("AWaRE Group:"), 
+                                                        status = "primary", inline = TRUE,
+                                                        choices = unique_a_wa_re, 
+                                                        selected = unique_a_wa_re)
                                 )
                             )
            )
@@ -107,31 +136,39 @@ ui <- fluidPage(
                                )
                       ),
                       tabPanel(i18n$t("AMC in Laos"), value = "tab_1",
-                               
-                               # div(class = "box_outputs",
-                               #     h4(i18n$t("Purpose of Antimicrobial Prescriptions")),
-                               #     fluidRow(
-                               #       column(6, 
-                               #              highchartOutput("tab_1_purpose_IPD"),
-                               #              formattableOutput("tab_1_table_purpose_IPD")),
-                               #       column(6, highchartOutput("tab_1_purpose_OPD"),
-                               #              formattableOutput("tab_1_table_purpose_OPD"))
-                               #     ),
-                               #     div(class = 'explanations', i18n$t("Unknown = reason for antimicrobial prescription could not be determined from patient records"))
-                               # ),
-                               # fluidRow(
-                               #   column(6, 
-                               #          div(class = "box_outputs",
-                               #              h4(i18n$t("Prescribed Antimicrobial Agents per Patient")),
-                               #              highchartOutput("tab_1_number_prescribed")
-                               #          )
-                               #   ),
-                               #   column(6, 
-                               #          div(class = "box_outputs",
-                               #              h4(i18n$t("Route of Given Antimicrobials")),
-                               #              highchartOutput("tab_1_route"))
-                               #   )
-                               # )
+                               div(class = "box_outputs",
+                                   h4(i18n$t("Number of consumed antimicrobials by hospital by year")),
+                                   highchartOutput("all_hosp_consum")
+                               ),
+                               fluidRow(
+                                 column(6,
+                                        div(class = "box_outputs",
+                                            h4(i18n$t("Antimicrobial consumptions based on AWaRE group")),
+                                            highchartOutput("aware")
+                                        )
+                                 ),
+                                 column(6,
+                                        div(class = "box_outputs",
+                                            h4(i18n$t("Route of administration")),
+                                            highchartOutput("route")
+                                        )
+                                 )
+                               ),
+                               fluidRow(
+                                 column(6,
+                                        div(class = "box_outputs",
+                                            h4(i18n$t("Common consumed antimicrobial group")),
+                                            highchartOutput("consum_group")
+                                        )
+                                 ),
+                                 column(6,
+                                        div(class = "box_outputs",
+                                            h4(i18n$t("Common consumed antimicrobial agents")),
+                                            highchartOutput("consum_agent")
+                                        )
+                                 )
+                               ),
+                               DTOutput("list")
                       )
            )
     )
@@ -142,6 +179,16 @@ ui <- fluidPage(
 # Define server logic ----
 server <- function(input, output, session) {
   
+  # Reactive data management
+  amc_dta_filter <- reactive(
+    amc_dta %>%
+      filter()
+    )
+  
+  # Source code to generate outputs
+  file_list <- list.files(path = "./www/outputs", pattern = "*.R")
+  for (file in file_list) source(paste0("./www/outputs/", file), local = TRUE)$value
+  
   # Stop the shiny app when the browser window is closed.
   session$onSessionEnded(function() {
     stopApp()
@@ -151,6 +198,9 @@ server <- function(input, output, session) {
   observeEvent(input$selected_language, {
     shiny.i18n::update_lang(session, input$selected_language)
   })
+  
+  
+  
 }
 
 # Return the App ----
