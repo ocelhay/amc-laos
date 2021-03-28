@@ -1,5 +1,7 @@
 output$route <- renderHighchart({
-  dta <- amc_dta %>%
+  req(amc_dta_filter())
+  
+  dta <- amc_dta_filter() %>%
     group_by(route) %>%
     summarise(tot = sum(dad))
   

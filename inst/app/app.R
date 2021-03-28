@@ -63,6 +63,7 @@ ui <- fluidPage(
   fluidRow(
     # Sidebar ----
     column(width = 3,
+           tags$img(src = 'FDD-logo.png', class = 'logo_fdd'),
            tags$a(href='https://www.tropmedres.ac/units/lomwru-lao-pdr', tags$img(src = 'LOMWRU.jpg', class = 'logo')),
            
            conditionalPanel(condition = "input.tabs == 'welcome'",
@@ -77,12 +78,11 @@ ui <- fluidPage(
                             div(id = "floatingfilter",
                                 div(class = "box_outputs",
                                     h4(icon("filter"), i18n$t("Filter Data:")),
-                                    
                                     prettyCheckboxGroup(inputId = "filter_year", label = i18n$t("Years:"), 
                                                         status = "primary", inline = TRUE,
                                                         choices = unique_year, 
                                                         selected = unique_year),
-                                    prettyCheckboxGroup(inputId = "filter_hospital", label = i18n$t("Years:"), 
+                                    prettyCheckboxGroup(inputId = "filter_hospital", label = i18n$t("Hospitals:"), 
                                                         status = "primary", inline = TRUE,
                                                         choices = unique_hospital, 
                                                         selected = unique_hospital),
@@ -114,21 +114,21 @@ ui <- fluidPage(
                       tabPanel(i18n$t("Welcome"), value = "welcome",
                                fluidRow(
                                  column(6,
-                                        h4(i18n$t("About the Lao AMC Dashboard")),
+                                        h4(i18n$t("About the Lao AMC Dashboard")), br(),
                                         bs_accordion(id = "amc_info") %>%
                                           bs_set_opts(panel_type = "default", use_heading_link = TRUE) %>%
-                                          bs_append(title = i18n$t("What is AMC?"), 
-                                                    content = i18n$t("...")) %>%
-                                          bs_append(title = i18n$t("Why is it needed?"), 
-                                                    content = i18n$t("...")) %>%
-                                          bs_append(title = i18n$t("Where are data from?"), 
-                                                    content = i18n$t("...")) %>%
+                                          bs_append(title = i18n$t("What do we know about antimicrobial consumption (AMC) in Laos?"), 
+                                                    content = i18n$t("Antimicrobial resistance is a great public health concern in Laos now. High antimicrobial consumption (AMC) is likely to be an important factor of the worsening AMR situation. Food and Drug department, Ministry of Health of Lao PDR (Laos) has systematically collected antimicrobial consumption data in Laos in Sethathirad Hospital, Khammuane and Luang Prabang Provincial Hospitals since 2018 as national based line data.")) %>%
+                                          bs_append(title = i18n$t("Why is AMC dashboard needed?"), 
+                                                    content = i18n$t("This AMC Dashboard allows clinicians, pharmacists and nurses as well as policy makers to have easy access to antimicrobial consumption data in Laos. This AMC dashboard will automatically produce a report for all users.")) %>%
+                                          bs_append(title = i18n$t("Where is surveillance being done?"), 
+                                                    content = i18n$t("This AMC dashboard currently contains surveillance 2019 data from three provincial hospitals, including Salavan, Xienghuang and Luang Namtha provincial Hospitals. In the future, we will upload AMC data from other surveillance sites including Khammuan, Luang Prabang, Vientiane and Savannakhet provincial hospitals as well as some central hospitals in Laos.")) %>%
                                           bs_append(title = i18n$t("Acknowledgements and credits"), 
-                                                    content = i18n$t("...")) %>%
+                                                    content = i18n$t("App development team: Olivier Celhay (https://olivier.celhay.net), Vilada Chansamouth, Elizabeth Ashley. With highly contribution from: Ms Vayouly Vidhamaly, Mr Kongchak and Ms Phouthavanh")) %>%
                                           bs_append(title = i18n$t("Contact"), 
-                                                    content = i18n$t("...")) %>%
+                                                    content = i18n$t("For any inquiry on this application, please contact Vilada Chansamouth (vilada@tropmedres.ac) or Lao PDR Food and Drug Department http://www.fdd.gov.la/")) %>%
                                           bs_append(title = i18n$t("Disclaimer"), 
-                                                    content = i18n$t("...")),
+                                                    content = i18n$t("The information contained in this application is the property of surveyed hospitals/LOMWRU/Food and Drug Department, Ministry of Health and may not be reproduced or distributed in any manner without express written permission. While we have attempted to ensure the accuracy of the data it is reporting, it makes no representations or warranties, expressed or implied, as to the accuracy or completeness of the information reported. Likewise, we make no representations or warranties, expressed or implied, as to the accuracy of the comparative data provided herein. We assume no legal liability or responsibility for any errors or omissions in the information or for any loss or damage resulting from the use of any information contained on these pages. This report is not intended to provide medical advice")),
                                  ),
                                  column(5, offset = 1,
                                         leafletOutput("welcome_map", height = 450)
@@ -168,7 +168,10 @@ ui <- fluidPage(
                                         )
                                  )
                                ),
-                               DTOutput("list")
+                               div(class = "box_outputs",
+                                   h4(i18n$t("Breakdown of antimicrobial consumptions")),
+                                   DTOutput("list")
+                               )
                       )
            )
     )
@@ -182,8 +185,13 @@ server <- function(input, output, session) {
   # Reactive data management
   amc_dta_filter <- reactive(
     amc_dta %>%
-      filter()
-    )
+      filter(data_collecting_year %in% input$filter_year,
+             hospital %in% input$filter_hospital,
+             act_3_name %in% input$filter_act_3_name,
+             substance %in% input$filter_substance,
+             route %in% input$filter_route,
+             a_wa_re %in% input$filter_a_wa_re)
+  )
   
   # Source code to generate outputs
   file_list <- list.files(path = "./www/outputs", pattern = "*.R")

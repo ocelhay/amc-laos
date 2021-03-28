@@ -10,6 +10,11 @@ body {
   padding: 2px;
 }
 
+.logo_fdd {
+  margin-top: 15px;
+  margin-bottom: 5px;
+  width: 40%;
+}
 
 .logo {
   margin-top: 15px;

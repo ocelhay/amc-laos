@@ -1,5 +1,7 @@
 output$aware <- renderHighchart({
-  dta <- amc_dta %>%
+  req(amc_dta_filter() %>% nrow() > 0)
+  
+  dta <- amc_dta_filter() %>%
     group_by(a_wa_re) %>%
     summarise(tot = sum(dad))
   

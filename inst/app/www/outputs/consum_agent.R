@@ -1,5 +1,7 @@
 output$consum_agent <- renderHighchart({
-  dta <- amc_dta %>%
+  req(amc_dta_filter() %>% nrow() > 0)
+  
+  dta <- amc_dta_filter() %>%
     group_by(substance) %>%
     summarise(consum = round(sum(dad), 1), .groups = "drop") %>%
     arrange(desc(consum))

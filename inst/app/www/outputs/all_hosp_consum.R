@@ -1,4 +1,6 @@
 output$all_hosp_consum <- renderHighchart({
+  req(amc_dta_filter() %>% nrow() > 0)
+  
   dta <- amc_dta_filter() %>%
     group_by(data_collecting_year, hospital) %>%
     summarise(consum = round(sum(dad), 1), .groups = "drop")
