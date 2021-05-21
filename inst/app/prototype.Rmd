@@ -75,7 +75,7 @@ rules <- validator(
   atc5 %in% valid_atc5,
   route %i% c("O", "P", "R"),
   act3 %in% valid_act3,
-  a_wa_re %in% c("Access", "Watch"),
+  a_wa_re %in% c("Access", "Watch", "Reserve"),
   substance %in% valid_substance,
   act_3_name %in% valid_name,
   in_range(dad_percent, min = 0, max = 100)
@@ -139,7 +139,7 @@ hchart(dta, type = "column", hcaes(x = data_collecting_year, y = consum, group =
 ```
 
 
-Antimicrobial consumptions based on AWaRE group:
+Antimicrobial consumptions based on AWaRe group:
 
 ```{r}
 dta <- amc_dta %>%

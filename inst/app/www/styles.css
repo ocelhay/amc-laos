@@ -10,13 +10,19 @@ body {
   padding: 2px;
 }
 
-.logo_fdd {
+#logo_fdd {
   margin-top: 15px;
   margin-bottom: 5px;
-  width: 40%;
+  width: 90%;
 }
 
-.logo {
+#logo_moh {
+  margin-top: 22px;
+  margin-bottom: 5px;
+  width: 90%;
+}
+
+#logo_lomwru {
   margin-top: 15px;
   margin-bottom: 5px;
   width: 95%;

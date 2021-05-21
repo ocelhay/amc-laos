@@ -14,8 +14,11 @@ library(shinyWidgets)
 library(tidyverse)
 library(validate)
 
+app_version <- "v.0.1-beta - Data last updated on 24/03/2021"
 
-version_app <- "v.0.1-alpha - Data last updated on 24/03/2021"
+if(FALSE) {
+  shiny::runApp()
+}
 
 # Lao Translation
 i18n <- Translator$new(translation_csvs_path = "./www/translation/")
@@ -38,33 +41,41 @@ shp_lao_provinces <- readOGR("./www/data/shapefiles/provinces.shp")
 
 
 amc_dta <- amc_dta %>%
-  mutate(hospital = case_when(
-    provinces == "Luang Natha" ~ "Luang Namtha Provincial Hospital",
-    provinces == "Xiengkhuang" ~ "Xiengkhuang Provincial Hospital",
-    provinces == "Salavan" ~ "Salavan Provincial Hospital"
-  ))
+  mutate(
+    hospital = case_when(
+      provinces == "Luang Natha" ~ "Luang Namtha Provincial Hospital",
+      provinces == "Xiengkhuang" ~ "Xiengkhuang Provincial Hospital",
+      provinces == "Salavan" ~ "Salavan Provincial Hospital"),
+    act_3_name = recode(act_3_name, "OTHER BETA-LACTAM ANTIBACTERIALS" = "Cephalosporins and carbapenems (and any others this includes)")) %>%
+  mutate(
+    act_3_name = str_to_sentence(act_3_name),
+    route = recode(route, "O" = "Oral", "P" = "Parenteral", "R" = "Rectal")
+  )
+
 
 # Variables for filters ----
 unique_year <- unique(amc_dta$data_collecting_year)
 unique_hospital <- unique(amc_dta$hospital)
 unique_act_3_name <- unique(amc_dta$act_3_name)
-unique_substance <- unique(amc_dta$substance)
+unique_substance <- sort(unique(amc_dta$substance))
 unique_route <- unique(amc_dta$route)
-unique_a_wa_re <- unique(amc_dta$a_wa_re)
 
 # Define UI ----
 ui <- fluidPage(
   shiny.i18n::usei18n(i18n),
   title = "Lao Antimicrobial Consumption Dashboard",
   theme = shinytheme("flatly"),
-  shinyWidgets::chooseSliderSkin('HTML5'),
+  shinyWidgets::chooseSliderSkin("Big"),
   includeCSS("./www/styles.css"),
   
   fluidRow(
     # Sidebar ----
     column(width = 3,
-           tags$img(src = 'FDD-logo.png', class = 'logo_fdd'),
-           tags$a(href='https://www.tropmedres.ac/units/lomwru-lao-pdr', tags$img(src = 'LOMWRU.jpg', class = 'logo')),
+           splitLayout(
+             tags$img(src = 'MoH-logo.png', id = 'logo_moh'),
+             tags$img(src = 'FDD-logo.png', id = 'logo_fdd')
+           ),
+           tags$a(href='https://www.tropmedres.ac/units/lomwru-lao-pdr', tags$img(src = 'LOMWRU.jpg', id = 'logo_lomwru')),
            
            conditionalPanel(condition = "input.tabs == 'welcome'",
                             br(),
@@ -72,7 +83,7 @@ ui <- fluidPage(
                             radioButtons('selected_language', label = NULL, choices = c("🇬🇧English" = "en", "🇱🇦ພາສາລາວ"= "la"), selected = "en", inline = TRUE),
            ),
            br(),
-           p(version_app),
+           p(app_version),
            
            conditionalPanel(condition = "input.tabs != 'welcome'",
                             div(id = "floatingfilter",
@@ -86,24 +97,33 @@ ui <- fluidPage(
                                                         status = "primary", inline = TRUE,
                                                         choices = unique_hospital, 
                                                         selected = unique_hospital),
-                                    pickerInput(inputId = "filter_act_3_name", label = i18n$t("ACT 3:"), multiple = TRUE,
+                                    pickerInput(inputId = "filter_act_3_name", label = i18n$t("Antibiotic class:"), multiple = TRUE,
                                                 choices = unique_act_3_name, selected = unique_act_3_name,
                                                 options = list(
-                                                  `actions-box` = TRUE, `deselect-all-text` = "None...",
-                                                  `select-all-text` = "Select All", `none-selected-text` = "None Selected")),
-                                    pickerInput(inputId = "filter_substance", label = i18n$t("Substance:"), multiple = TRUE,
+                                                  `actions-box` = TRUE, 
+                                                  `deselect-all-text` = "Select None",
+                                                  `select-all-text` = "Select All", 
+                                                  `none-selected-text` = "None Selected",
+                                                  `selected-text-format` = paste0("count > ", length(unique_act_3_name) - 1), 
+                                                  `count-selected-text` = "All Classes Selected")
+                                    ),
+                                    pickerInput(inputId = "filter_substance", label = i18n$t("Antibiotic:"), multiple = TRUE,
                                                 choices = unique_substance, selected = unique_substance,
                                                 options = list(
-                                                  `actions-box` = TRUE, `deselect-all-text` = "None...",
-                                                  `select-all-text` = "Select All", `none-selected-text` = "None Selected")),
-                                    prettyCheckboxGroup(inputId = "filter_route", label = i18n$t("Route:"), 
+                                                  `actions-box` = TRUE, 
+                                                  `deselect-all-text` = "Select None",
+                                                  `select-all-text` = "Select All", 
+                                                  `none-selected-text` = "None Selected",
+                                                  `selected-text-format` = paste0("count > ", length(unique_substance) - 1), 
+                                                  `count-selected-text` = "All Antibiotics Selected")),
+                                    prettyCheckboxGroup(inputId = "filter_route", label = i18n$t("Route of administration:"), 
                                                         status = "primary", inline = TRUE,
                                                         choices = unique_route, 
                                                         selected = unique_route),
-                                    prettyCheckboxGroup(inputId = "filter_a_wa_re", label = i18n$t("AWaRE Group:"), 
+                                    prettyCheckboxGroup(inputId = "filter_a_wa_re", label = i18n$t("AWaRe Group:"), 
                                                         status = "primary", inline = TRUE,
-                                                        choices = unique_a_wa_re, 
-                                                        selected = unique_a_wa_re)
+                                                        choices = c("Access", "Watch", "Reserve"), 
+                                                        selected = c("Access", "Watch", "Reserve"))
                                 )
                             )
            )
@@ -143,7 +163,7 @@ ui <- fluidPage(
                                fluidRow(
                                  column(6,
                                         div(class = "box_outputs",
-                                            h4(i18n$t("Antimicrobial consumptions based on AWaRE group")),
+                                            h4(i18n$t("Antimicrobial consumptions based on AWaRe group")),
                                             highchartOutput("aware")
                                         )
                                  ),
@@ -157,20 +177,20 @@ ui <- fluidPage(
                                fluidRow(
                                  column(6,
                                         div(class = "box_outputs",
-                                            h4(i18n$t("Common consumed antimicrobial group")),
+                                            h4(i18n$t("Most common antibiotic classes")),
                                             highchartOutput("consum_group")
                                         )
                                  ),
                                  column(6,
                                         div(class = "box_outputs",
-                                            h4(i18n$t("Common consumed antimicrobial agents")),
+                                            h4(i18n$t("Most common antibiotics")),
                                             highchartOutput("consum_agent")
                                         )
                                  )
                                ),
                                div(class = "box_outputs",
                                    h4(i18n$t("Breakdown of antimicrobial consumptions")),
-                                   DTOutput("list")
+                                   DTOutput("table")
                                )
                       )
            )
