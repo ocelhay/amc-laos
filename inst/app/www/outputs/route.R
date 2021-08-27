@@ -9,7 +9,7 @@ output$route <- renderHighchart({
   highchart() %>%
     hc_add_series(dta, "pie", hcaes(name = route, y = tot),
                   dataLabels = list(enabled = TRUE, style = list(fontSize = "13px"),
-                                    format = '{point.name} <br>{point.percentage:.2f} %')) %>%
+                                    format = '{point.name} <br>{point.percentage:.1f} %')) %>%
     hc_title(text = "Route of administration") %>%
-    hc_tooltip(headerFormat = "", pointFormat = "{point.tot:.1f} DAD")
+    hc_tooltip(headerFormat = "", pointFormat = "{point.tot:.1f} DDD per patient encounter")
 })

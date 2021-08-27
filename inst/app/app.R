@@ -1,64 +1,4 @@
-# Load packages ----
-library(bsplus)
-library(DT)
-library(glue)
-library(highcharter)
-library(janitor)
-library(leaflet)
-library(readxl)
-library(rgdal)
-library(shiny.i18n)
-library(shiny)
-library(shinythemes)
-library(shinyWidgets)
-library(tidyverse)
-library(validate)
-
-app_version <- "v.0.1-beta - Data last updated on 24/03/2021"
-
-if(FALSE) {
-  shiny::runApp()
-}
-
-# Lao Translation
-i18n <- Translator$new(translation_csvs_path = "./www/translation/")
-
-# Data import ----
-
-amc_dta <- read_excel(path = "./www/data/AMC_data_2021-03-10.xlsx")
-amc_dta <- clean_names(amc_dta)
-
-# sheet ACT: removed some content in columns outside the table.
-amc_dic <- list(
-  act = read_excel(path = "./www/data/AMC_Dictionary_2021-03-10.xlsx", sheet = "ACT") %>% clean_names(),
-  act3 = read_excel(path = "./www/data/AMC_Dictionary_2021-03-10.xlsx", sheet = "ACT3 & ATC name") %>% clean_names(),
-  atc5 = read_excel(path = "./www/data/AMC_Dictionary_2021-03-10.xlsx", sheet = "ACT3 & 5, substance and AWaRe") %>% clean_names()
-)
-
-coords <- read.csv("./www/data/hospital_geo_coordinates.csv", stringsAsFactors = FALSE)
-
-shp_lao_provinces <- readOGR("./www/data/shapefiles/provinces.shp")
-
-
-amc_dta <- amc_dta %>%
-  mutate(
-    hospital = case_when(
-      provinces == "Luang Natha" ~ "Luang Namtha Provincial Hospital",
-      provinces == "Xiengkhuang" ~ "Xiengkhuang Provincial Hospital",
-      provinces == "Salavan" ~ "Salavan Provincial Hospital"),
-    act_3_name = recode(act_3_name, "OTHER BETA-LACTAM ANTIBACTERIALS" = "Cephalosporins and carbapenems (and any others this includes)")) %>%
-  mutate(
-    act_3_name = str_to_sentence(act_3_name),
-    route = recode(route, "O" = "Oral", "P" = "Parenteral", "R" = "Rectal")
-  )
-
-
-# Variables for filters ----
-unique_year <- unique(amc_dta$data_collecting_year)
-unique_hospital <- unique(amc_dta$hospital)
-unique_act_3_name <- unique(amc_dta$act_3_name)
-unique_substance <- sort(unique(amc_dta$substance))
-unique_route <- unique(amc_dta$route)
+source('./www/startup.R', local = TRUE)
 
 # Define UI ----
 ui <- fluidPage(
@@ -138,17 +78,38 @@ ui <- fluidPage(
                                         bs_accordion(id = "amc_info") %>%
                                           bs_set_opts(panel_type = "default", use_heading_link = TRUE) %>%
                                           bs_append(title = i18n$t("What do we know about antimicrobial consumption (AMC) in Laos?"), 
-                                                    content = i18n$t("Antimicrobial resistance is a great public health concern in Laos now. High antimicrobial consumption (AMC) is likely to be an important factor of the worsening AMR situation. Food and Drug department, Ministry of Health of Lao PDR (Laos) has systematically collected antimicrobial consumption data in Laos in Sethathirad Hospital, Khammuane and Luang Prabang Provincial Hospitals since 2018 as national based line data.")) %>%
-                                          bs_append(title = i18n$t("Why is AMC dashboard needed?"), 
-                                                    content = i18n$t("This AMC Dashboard allows clinicians, pharmacists and nurses as well as policy makers to have easy access to antimicrobial consumption data in Laos. This AMC dashboard will automatically produce a report for all users.")) %>%
+                                                    content = div(conditionalPanel("input.selected_language == 'en'", includeMarkdown("./www/markdown/welcome_01_en.md")),
+                                                                  conditionalPanel("input.selected_language == 'la'", includeMarkdown("./www/markdown/welcome_01_la.md")))) %>%
+                                          bs_append(title = i18n$t("Why is the AMC dashboard needed?"), 
+                                                    content = div(conditionalPanel("input.selected_language == 'en'", includeMarkdown("./www/markdown/welcome_02_en.md")),
+                                                                  conditionalPanel("input.selected_language == 'la'", includeMarkdown("./www/markdown/welcome_02_la.md")))) %>%
                                           bs_append(title = i18n$t("Where is surveillance being done?"), 
-                                                    content = i18n$t("This AMC dashboard currently contains surveillance 2019 data from three provincial hospitals, including Salavan, Xienghuang and Luang Namtha provincial Hospitals. In the future, we will upload AMC data from other surveillance sites including Khammuan, Luang Prabang, Vientiane and Savannakhet provincial hospitals as well as some central hospitals in Laos.")) %>%
-                                          bs_append(title = i18n$t("Acknowledgements and credits"), 
-                                                    content = i18n$t("App development team: Olivier Celhay (https://olivier.celhay.net), Vilada Chansamouth, Elizabeth Ashley. With highly contribution from: Ms Vayouly Vidhamaly, Mr Kongchak and Ms Phouthavanh")) %>%
+                                                    content = div(conditionalPanel("input.selected_language == 'en'", includeMarkdown("./www/markdown/welcome_03_en.md")),
+                                                                  conditionalPanel("input.selected_language == 'la'", includeMarkdown("./www/markdown/welcome_04_la.md")))) %>%
+                                          bs_append(title = i18n$t("What do we know about Lao National AMC monitoring?"), 
+                                                    content = div(conditionalPanel("input.selected_language == 'en'", includeMarkdown("./www/markdown/welcome_04_en.md")),
+                                                                  conditionalPanel("input.selected_language == 'la'", includeMarkdown("./www/markdown/welcome_04_la.md")))) %>%
+                                          bs_append(title = i18n$t("What do we know about Lao hospital AMC monitoring?"), 
+                                                    content = div(conditionalPanel("input.selected_language == 'en'", includeMarkdown("./www/markdown/welcome_05_en.md")),
+                                                                  conditionalPanel("input.selected_language == 'la'", includeMarkdown("./www/markdown/welcome_05_la.md")))) %>%
+                                          bs_append(title = i18n$t("What is the Defined Daily Doses (DDDs) methodology?"), 
+                                                    content = div(conditionalPanel("input.selected_language == 'en'", includeMarkdown("./www/markdown/welcome_06_en.md")),
+                                                                  conditionalPanel("input.selected_language == 'la'", includeMarkdown("./www/markdown/welcome_06_la.md")))) %>%
+                                          bs_append(title = i18n$t("What antibiotics are included in this dashboard?"), 
+                                                    content = div(conditionalPanel("input.selected_language == 'en'", includeMarkdown("./www/markdown/welcome_07_en.md")),
+                                                                  conditionalPanel("input.selected_language == 'la'", includeMarkdown("./www/markdown/welcome_07_la.md")))) %>%
+                                          bs_append(title = i18n$t("What is the WHO AWaRe classification?"), 
+                                                    content = div(conditionalPanel("input.selected_language == 'en'", includeMarkdown("./www/markdown/welcome_08_en.md")),
+                                                                  conditionalPanel("input.selected_language == 'la'", includeMarkdown("./www/markdown/welcome_08_la.md")))) %>%
+                                          bs_append(title = i18n$t("Acknowledgements and Credits"), 
+                                                    content = div(conditionalPanel("input.selected_language == 'en'", includeMarkdown("./www/markdown/welcome_09_en.md")),
+                                                                  conditionalPanel("input.selected_language == 'la'", includeMarkdown("./www/markdown/welcome_09_la.md")))) %>%
                                           bs_append(title = i18n$t("Contact"), 
-                                                    content = i18n$t("For any inquiry on this application, please contact Vilada Chansamouth (vilada@tropmedres.ac) or Lao PDR Food and Drug Department http://www.fdd.gov.la/")) %>%
+                                                    content = div(conditionalPanel("input.selected_language == 'en'", includeMarkdown("./www/markdown/welcome_10_en.md")),
+                                                                  conditionalPanel("input.selected_language == 'la'", includeMarkdown("./www/markdown/welcome_10_la.md")))) %>%
                                           bs_append(title = i18n$t("Disclaimer"), 
-                                                    content = i18n$t("The information contained in this application is the property of surveyed hospitals/LOMWRU/Food and Drug Department, Ministry of Health and may not be reproduced or distributed in any manner without express written permission. While we have attempted to ensure the accuracy of the data it is reporting, it makes no representations or warranties, expressed or implied, as to the accuracy or completeness of the information reported. Likewise, we make no representations or warranties, expressed or implied, as to the accuracy of the comparative data provided herein. We assume no legal liability or responsibility for any errors or omissions in the information or for any loss or damage resulting from the use of any information contained on these pages. This report is not intended to provide medical advice")),
+                                                    content = div(conditionalPanel("input.selected_language == 'en'", includeMarkdown("./www/markdown/welcome_11_en.md")),
+                                                                  conditionalPanel("input.selected_language == 'la'", includeMarkdown("./www/markdown/welcome_11_la.md")))),
                                  ),
                                  column(5, offset = 1,
                                         leafletOutput("welcome_map", height = 450)
@@ -157,7 +118,7 @@ ui <- fluidPage(
                       ),
                       tabPanel(i18n$t("AMC in Laos"), value = "tab_1",
                                div(class = "box_outputs",
-                                   h4(i18n$t("Number of consumed antimicrobials by hospital by year")),
+                                   h4(i18n$t("Defined Daily Dose per patient encounter")),
                                    highchartOutput("all_hosp_consum")
                                ),
                                fluidRow(

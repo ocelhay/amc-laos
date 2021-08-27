@@ -1,0 +1,1 @@
+Antimicrobial resistance is a great public health concern in Laos now. High antimicrobial consumption (AMC) is likely to be an important factor of the worsening AMR situation. The Food and Drug department, Ministry of Health of Lao PDR (Laos) has systematically collected antimicrobial consumption data in Laos since 2019.

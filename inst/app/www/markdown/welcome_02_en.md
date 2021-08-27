@@ -1,0 +1,1 @@
+This AMC Dashboard allows clinicians, pharmacists and nurses as well as policy makers to have easy access to antimicrobial consumption data in Laos. This AMC dashboard will automatically produce a report for all users.

@@ -1,0 +1,3 @@
+Hospital level AMC monitoring is conducted by pharmacies within central and provincial hospitals in the public health sector, with the support of the Food and Drug Department, Ministry of Health, using WHO guidance<sup>1</sup>. Consumption data is collected from hospital pharmacy dispensing records, which may be in the form of paper-based registers and/or Excel spreadsheets. Due to the inability to differentiate between inpatient and outpatient AMC data in most hospital pharmacies, the total of inpatient and outpatient encounters is used to perform the DDD per 1,000 Patient Encounter calculation.
+
+<sup>1</sup>World Health Organization. WHO guidance on surveillance of antimicrobial consumption in hospitals (draft V0.1-20190619). Geneva: World Health Organization, 2019.
