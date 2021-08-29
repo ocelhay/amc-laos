@@ -1,147 +1,146 @@
 source('./www/startup.R', local = TRUE)
-library(bs4Dash)
+library(shinydashboard)
+library(shinydashboardPlus)
 
 # Define UI ----
 ui <- dashboardPage(
   dashboardHeader(title = "AMC in Laos"),
   dashboardSidebar(
-    splitLayout(
+    # splitLayout(
       tags$img(src = 'MoH-logo.png', id = 'logo_moh'),
-      tags$img(src = 'FDD-logo.png', id = 'logo_fdd')
-    ),
-    tags$a(href='https://www.tropmedres.ac/units/lomwru-lao-pdr', tags$img(src = 'LOMWRU.jpg', id = 'logo_lomwru'))
+      tags$img(src = 'FDD-logo.png', id = 'logo_fdd'),
+    # ),
+    tags$a(href='https://www.tropmedres.ac/units/lomwru-lao-pdr', tags$img(src = 'LOMWRU.jpg', id = 'logo_lomwru')),
+    br(), br(),
+    menuItem("Welcome", tabName = "welcome"),
+    menuItem("AMC Data", icon = icon("th"), tabName = "amc", badgeLabel = "new", badgeColor = "green")
   ),
   dashboardBody(
-    
     shiny.i18n::usei18n(i18n),
     includeCSS("./www/styles.css"),
-    # Boxes need to be put in a row (or column)
-    fluidRow(
-      column(6,
-             box(width = 12,
-               title = i18n$t("Lao AMC Dashboard: Explore Antimicrobial Consumption in Laos"),
-               radioButtons('selected_language', label = NULL, choices = c("🇬🇧" = "en", "🇱🇦"= "la"), selected = "en", inline = TRUE),
-               p(app_version)
-             ),
-             box(
-               # title = span(icon("filter"), i18n$t("Filter Data:")),
-               title = "Filter",
-               "hjwehjkfhejkw fdskhfjkwgfjgjfhk ashjkhfjkdgfhj hkajsfhjkfds  lsakfjklfjdal",
-               prettyCheckboxGroup(inputId = "filter_year", label = i18n$t("Years:"),
-                                   status = "primary", inline = TRUE,
-                                   choices = unique_year,
-                                   selected = unique_year),
-               prettyCheckboxGroup(inputId = "filter_hospital", label = i18n$t("Hospitals:"),
-                                   status = "primary", inline = TRUE,
-                                   choices = unique_hospital,
-                                   selected = unique_hospital),
-               pickerInput(inputId = "filter_act_3_name", label = i18n$t("Antibiotic class:"), multiple = TRUE,
-                           choices = unique_act_3_name, selected = unique_act_3_name,
-                           options = list(
-                             `actions-box` = TRUE,
-                             `deselect-all-text` = "Select None",
-                             `select-all-text` = "Select All",
-                             `none-selected-text` = "None Selected",
-                             `selected-text-format` = paste0("count > ", length(unique_act_3_name) - 1),
-                             `count-selected-text` = "All Classes Selected")
-               ),
-               pickerInput(inputId = "filter_substance", label = i18n$t("Antibiotic:"), multiple = TRUE,
-                           choices = unique_substance, selected = unique_substance,
-                           options = list(
-                             `actions-box` = TRUE,
-                             `deselect-all-text` = "Select None",
-                             `select-all-text` = "Select All",
-                             `none-selected-text` = "None Selected",
-                             `selected-text-format` = paste0("count > ", length(unique_substance) - 1),
-                             `count-selected-text` = "All Antibiotics Selected")),
-               prettyCheckboxGroup(inputId = "filter_route", label = i18n$t("Route of administration:"),
-                                   status = "primary", inline = TRUE,
-                                   choices = unique_route,
-                                   selected = unique_route),
-               prettyCheckboxGroup(inputId = "filter_a_wa_re", label = i18n$t("AWaRe Group:"),
-                                   status = "primary", inline = TRUE,
-                                   choices = c("Access", "Watch", "Reserve"),
-                                   selected = c("Access", "Watch", "Reserve"))
-             )
+    tabItems(
+      tabItem(tabName = "welcome",
+              box(width = 4,
+                  title = i18n$t("Lao AMC Dashboard: Explore Antimicrobial Consumption in Laos"),
+                  radioButtons('selected_language', label = NULL, choices = c("🇬🇧 English" = "en", "🇱🇦 Lao"= "la"), selected = "en", inline = TRUE),
+                  p(app_version)
+              ),
+              box(width = 8,
+                  title = "Map",
+                  leafletOutput("welcome_map", height = 450)
+              ),
+              box(width = 12,
+                title = h4(i18n$t("About the Lao AMC Dashboard")),
+                bs_accordion(id = "amc_info") %>%
+                  bs_set_opts(panel_type = "default", use_heading_link = TRUE) %>%
+                  bs_append(title = i18n$t("What do we know about antimicrobial consumption (AMC) in Laos?"),
+                            content = div(conditionalPanel("input.selected_language == 'en'", includeMarkdown("./www/markdown/welcome_01_en.md")),
+                                          conditionalPanel("input.selected_language == 'la'", includeMarkdown("./www/markdown/welcome_01_la.md")))) %>%
+                  bs_append(title = i18n$t("Why is the AMC dashboard needed?"),
+                            content = div(conditionalPanel("input.selected_language == 'en'", includeMarkdown("./www/markdown/welcome_02_en.md")),
+                                          conditionalPanel("input.selected_language == 'la'", includeMarkdown("./www/markdown/welcome_02_la.md")))) %>%
+                  bs_append(title = i18n$t("Where is surveillance being done?"),
+                            content = div(conditionalPanel("input.selected_language == 'en'", includeMarkdown("./www/markdown/welcome_03_en.md")),
+                                          conditionalPanel("input.selected_language == 'la'", includeMarkdown("./www/markdown/welcome_04_la.md")))) %>%
+                  bs_append(title = i18n$t("What do we know about Lao National AMC monitoring?"),
+                            content = div(conditionalPanel("input.selected_language == 'en'", includeMarkdown("./www/markdown/welcome_04_en.md")),
+                                          conditionalPanel("input.selected_language == 'la'", includeMarkdown("./www/markdown/welcome_04_la.md")))) %>%
+                  bs_append(title = i18n$t("What do we know about Lao hospital AMC monitoring?"),
+                            content = div(conditionalPanel("input.selected_language == 'en'", includeMarkdown("./www/markdown/welcome_05_en.md")),
+                                          conditionalPanel("input.selected_language == 'la'", includeMarkdown("./www/markdown/welcome_05_la.md")))) %>%
+                  bs_append(title = i18n$t("What is the Defined Daily Doses (DDDs) methodology?"),
+                            content = div(conditionalPanel("input.selected_language == 'en'", includeMarkdown("./www/markdown/welcome_06_en.md")),
+                                          conditionalPanel("input.selected_language == 'la'", includeMarkdown("./www/markdown/welcome_06_la.md")))) %>%
+                  bs_append(title = i18n$t("What antibiotics are included in this dashboard?"),
+                            content = div(conditionalPanel("input.selected_language == 'en'", includeMarkdown("./www/markdown/welcome_07_en.md")),
+                                          conditionalPanel("input.selected_language == 'la'", includeMarkdown("./www/markdown/welcome_07_la.md")))) %>%
+                  bs_append(title = i18n$t("What is the WHO AWaRe classification?"),
+                            content = div(conditionalPanel("input.selected_language == 'en'", includeMarkdown("./www/markdown/welcome_08_en.md")),
+                                          conditionalPanel("input.selected_language == 'la'", includeMarkdown("./www/markdown/welcome_08_la.md")))) %>%
+                  bs_append(title = i18n$t("Acknowledgements and Credits"),
+                            content = div(conditionalPanel("input.selected_language == 'en'", includeMarkdown("./www/markdown/welcome_09_en.md")),
+                                          conditionalPanel("input.selected_language == 'la'", includeMarkdown("./www/markdown/welcome_09_la.md")))) %>%
+                  bs_append(title = i18n$t("Contact"),
+                            content = div(conditionalPanel("input.selected_language == 'en'", includeMarkdown("./www/markdown/welcome_10_en.md")),
+                                          conditionalPanel("input.selected_language == 'la'", includeMarkdown("./www/markdown/welcome_10_la.md")))) %>%
+                  bs_append(title = i18n$t("Disclaimer"),
+                            content = div(conditionalPanel("input.selected_language == 'en'", includeMarkdown("./www/markdown/welcome_11_en.md")),
+                                          conditionalPanel("input.selected_language == 'la'", includeMarkdown("./www/markdown/welcome_11_la.md"))))
+              )
       ),
-      column(6,
-             box(
-               title = h4(i18n$t("About the Lao AMC Dashboard")),
-               bs_accordion(id = "amc_info") %>%
-                 bs_set_opts(panel_type = "default", use_heading_link = TRUE) %>%
-                 bs_append(title = i18n$t("What do we know about antimicrobial consumption (AMC) in Laos?"),
-                           content = div(conditionalPanel("input.selected_language == 'en'", includeMarkdown("./www/markdown/welcome_01_en.md")),
-                                         conditionalPanel("input.selected_language == 'la'", includeMarkdown("./www/markdown/welcome_01_la.md")))) %>%
-                 bs_append(title = i18n$t("Why is the AMC dashboard needed?"),
-                           content = div(conditionalPanel("input.selected_language == 'en'", includeMarkdown("./www/markdown/welcome_02_en.md")),
-                                         conditionalPanel("input.selected_language == 'la'", includeMarkdown("./www/markdown/welcome_02_la.md")))) %>%
-                 bs_append(title = i18n$t("Where is surveillance being done?"),
-                           content = div(conditionalPanel("input.selected_language == 'en'", includeMarkdown("./www/markdown/welcome_03_en.md")),
-                                         conditionalPanel("input.selected_language == 'la'", includeMarkdown("./www/markdown/welcome_04_la.md")))) %>%
-                 bs_append(title = i18n$t("What do we know about Lao National AMC monitoring?"),
-                           content = div(conditionalPanel("input.selected_language == 'en'", includeMarkdown("./www/markdown/welcome_04_en.md")),
-                                         conditionalPanel("input.selected_language == 'la'", includeMarkdown("./www/markdown/welcome_04_la.md")))) %>%
-                 bs_append(title = i18n$t("What do we know about Lao hospital AMC monitoring?"),
-                           content = div(conditionalPanel("input.selected_language == 'en'", includeMarkdown("./www/markdown/welcome_05_en.md")),
-                                         conditionalPanel("input.selected_language == 'la'", includeMarkdown("./www/markdown/welcome_05_la.md")))) %>%
-                 bs_append(title = i18n$t("What is the Defined Daily Doses (DDDs) methodology?"),
-                           content = div(conditionalPanel("input.selected_language == 'en'", includeMarkdown("./www/markdown/welcome_06_en.md")),
-                                         conditionalPanel("input.selected_language == 'la'", includeMarkdown("./www/markdown/welcome_06_la.md")))) %>%
-                 bs_append(title = i18n$t("What antibiotics are included in this dashboard?"),
-                           content = div(conditionalPanel("input.selected_language == 'en'", includeMarkdown("./www/markdown/welcome_07_en.md")),
-                                         conditionalPanel("input.selected_language == 'la'", includeMarkdown("./www/markdown/welcome_07_la.md")))) %>%
-                 bs_append(title = i18n$t("What is the WHO AWaRe classification?"),
-                           content = div(conditionalPanel("input.selected_language == 'en'", includeMarkdown("./www/markdown/welcome_08_en.md")),
-                                         conditionalPanel("input.selected_language == 'la'", includeMarkdown("./www/markdown/welcome_08_la.md")))) %>%
-                 bs_append(title = i18n$t("Acknowledgements and Credits"),
-                           content = div(conditionalPanel("input.selected_language == 'en'", includeMarkdown("./www/markdown/welcome_09_en.md")),
-                                         conditionalPanel("input.selected_language == 'la'", includeMarkdown("./www/markdown/welcome_09_la.md")))) %>%
-                 bs_append(title = i18n$t("Contact"),
-                           content = div(conditionalPanel("input.selected_language == 'en'", includeMarkdown("./www/markdown/welcome_10_en.md")),
-                                         conditionalPanel("input.selected_language == 'la'", includeMarkdown("./www/markdown/welcome_10_la.md")))) %>%
-                 bs_append(title = i18n$t("Disclaimer"),
-                           content = div(conditionalPanel("input.selected_language == 'en'", includeMarkdown("./www/markdown/welcome_11_en.md")),
-                                         conditionalPanel("input.selected_language == 'la'", includeMarkdown("./www/markdown/welcome_11_la.md"))))
-             ),
-             box(
-               title = "Map",
-               leafletOutput("welcome_map", height = 450)
-             ),
-             
-             box(
-               title = h4(i18n$t("Defined Daily Dose per patient encounter")),
-               highchartOutput("all_hosp_consum")
-             ),
-             
-             box(
-               title = h4(i18n$t("Antimicrobial consumptions based on AWaRe group")),
-               highchartOutput("aware")
-             ),
-             
-             box(
-               title = h4(i18n$t("Route of administration")),
-               highchartOutput("route")
-             ),
-             
-             box(
-               title = h4(i18n$t("Most common antibiotic classes")),
-               highchartOutput("consum_group")
-             ),
-             
-             box(
-               title = h4(i18n$t("Most common antibiotics")),
-               highchartOutput("consum_agent")
-             ),
-             
-             box(
-               title = h4(i18n$t("Breakdown of antimicrobial consumptions")),
-               DTOutput("table")
-             )
-             
+      
+      tabItem(tabName = "amc",
+              box(width = 12,
+                  title = span(icon("filter"), i18n$t("Filter Data:")),
+                  div(id = "filters",
+                      prettyCheckboxGroup(inputId = "filter_year", label = i18n$t("Years:"),
+                                          status = "primary", inline = TRUE,
+                                          choices = unique_year,
+                                          selected = unique_year),
+                      prettyCheckboxGroup(inputId = "filter_hospital", label = i18n$t("Hospitals:"),
+                                          status = "primary", inline = TRUE,
+                                          choices = unique_hospital,
+                                          selected = unique_hospital),
+                      pickerInput(inputId = "filter_act_3_name", label = i18n$t("Antibiotic class:"), multiple = TRUE,
+                                  choices = unique_act_3_name, selected = unique_act_3_name,
+                                  options = list(
+                                    `actions-box` = TRUE,
+                                    `deselect-all-text` = "Select None",
+                                    `select-all-text` = "Select All",
+                                    `none-selected-text` = "None Selected",
+                                    `selected-text-format` = paste0("count > ", length(unique_act_3_name) - 1),
+                                    `count-selected-text` = "All Classes Selected")
+                      ),
+                      pickerInput(inputId = "filter_substance", label = i18n$t("Antibiotic:"), multiple = TRUE,
+                                  choices = unique_substance, selected = unique_substance,
+                                  options = list(
+                                    `actions-box` = TRUE,
+                                    `deselect-all-text` = "Select None",
+                                    `select-all-text` = "Select All",
+                                    `none-selected-text` = "None Selected",
+                                    `selected-text-format` = paste0("count > ", length(unique_substance) - 1),
+                                    `count-selected-text` = "All Antibiotics Selected")),
+                      prettyCheckboxGroup(inputId = "filter_route", label = i18n$t("Route of administration:"),
+                                          status = "primary", inline = TRUE,
+                                          choices = unique_route,
+                                          selected = unique_route),
+                      prettyCheckboxGroup(inputId = "filter_a_wa_re", label = i18n$t("AWaRe Group:"),
+                                          status = "primary", inline = TRUE,
+                                          choices = c("Access", "Watch", "Reserve"),
+                                          selected = c("Access", "Watch", "Reserve"))
+                  )
+              ),
+              box(
+                title = h4(i18n$t("Defined Daily Dose per patient encounter")),
+                highchartOutput("all_hosp_consum")
+              ),
+              
+              box(
+                title = h4(i18n$t("Antimicrobial consumptions based on AWaRe group")),
+                highchartOutput("aware")
+              ),
+              
+              box(
+                title = h4(i18n$t("Route of administration")),
+                highchartOutput("route")
+              ),
+              
+              box(
+                title = h4(i18n$t("Most common antibiotic classes")),
+                highchartOutput("consum_group")
+              ),
+              
+              box(
+                title = h4(i18n$t("Most common antibiotics")),
+                highchartOutput("consum_agent")
+              ),
+              
+              box(
+                title = h4(i18n$t("Breakdown of antimicrobial consumptions")),
+                DTOutput("table")
+              )
       )
     )
-
-    
   )
 )
 
