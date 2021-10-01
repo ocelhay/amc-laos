@@ -4,6 +4,9 @@ body {
   font-size: 1.6em
 }
 */
+#selection_language {
+  visibility: hidden;
+}
 
 .right {
   float: right;

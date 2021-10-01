@@ -27,12 +27,11 @@ ui <- dashboardPage(
                   br(), br(),
                   leafletOutput("welcome_map", height = 450)
               ),
-              box(id = "status", width = 7, 
-                  div(id = "app_version", app_version),
-                  radioButtons('selected_language', label = NULL, choices = c("🇬🇧 English" = "en", "🇱🇦 Lao"= "la"), selected = "en", inline = TRUE)
-              ),
               box(width = 7,
                   title = i18n$t("About the Lao AMC Dashboard"),
+                  div(id = "app_version", app_version),
+                  div(id = "selection_language", radioButtons('selected_language', label = NULL, choices = c("🇬🇧 English" = "en", "🇱🇦 Lao"= "la"), selected = "en", inline = TRUE)),
+                  
                   bs_accordion(id = "amc_info") %>%
                     bs_set_opts(panel_type = "default", use_heading_link = TRUE) %>%
                     bs_append(title = i18n$t("What do we know about antimicrobial consumption (AMC) in Laos?"),

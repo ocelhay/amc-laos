@@ -14,7 +14,7 @@ library(shinyWidgets)
 library(tidyverse)
 library(validate)
 
-app_version <- "v.0.2-beta - Data last updated on 24/03/2021"
+app_version <- "v.0.3-beta - Data last updated on 24/03/2021"
 
 # Lao Translation
 i18n <- Translator$new(translation_csvs_path = "./www/translation/")
