@@ -27,10 +27,24 @@ body {
   width: 70%;
 }
 
-#logo_lomwru {
+#logo_koi {
   margin-top: 15px;
-  margin-bottom: 5px;
   width: 95%;
+}
+
+#logo_who {
+  margin-top: 15px;
+  width: 95%;
+}
+
+#logo_ff {
+  margin-top: 15px;
+  width: 95%;
+}
+
+#logo_lomwru {
+  margin-top: 30px;
+  width: 100%;
 }
 
 #app_version {

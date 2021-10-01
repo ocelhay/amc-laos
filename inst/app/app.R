@@ -7,27 +7,32 @@ ui <- dashboardPage(
   skin = "purple",
   dashboardHeader(title = "Lao AMC Dashboard"),
   dashboardSidebar(minified = FALSE,
-    sidebarMenu(
-      menuItem("Welcome", tabName = "welcome"),
-      menuItem("AMC Data", tabName = "amc", icon = icon("th"))
-    )
+                   sidebarMenu(
+                     menuItem("Welcome", tabName = "welcome"),
+                     menuItem("AMC Data", tabName = "amc", icon = icon("th"))
+                   )
   ),
   dashboardBody(
     shiny.i18n::usei18n(i18n),
     includeCSS("./www/styles.css"),
     tabItems(
       tabItem(tabName = "welcome",
-              box(width = 5,
+              box(width = 6,
                   title = i18n$t("Lao AMC Dashboard: Explore Antimicrobial Consumption in Laos"),
                   splitLayout(
-                    tags$img(src = 'MoH-logo.png', id = 'logo_moh'),
-                    tags$img(src = 'FDD-logo.png', id = 'logo_fdd')
+                    tags$img(src = './logos/MoH-logo.png', id = 'logo_moh'),
+                    tags$img(src = './logos/FDD-logo.png', id = 'logo_fdd')
                   ),
-                  tags$a(href='https://www.tropmedres.ac/units/lomwru-lao-pdr', tags$img(src = 'LOMWRU.jpg', id = 'logo_lomwru')),
-                  br(), br(),
-                  leafletOutput("welcome_map", height = 450)
+                  br(),
+                  leafletOutput("welcome_map", height = 350),
+                  fluidRow(
+                    column(3, tags$img(src = './logos/Koica-logo.png', id = 'logo_koi')),
+                    column(2, tags$img(src = './logos/WHO-logo.jpg', id = 'logo_who')),
+                    column(3, tags$img(src = './logos/FF-logo.png', id = 'logo_ff')),
+                    column(4, tags$a(href='https://www.tropmedres.ac/units/lomwru-lao-pdr', tags$img(src = './logos/LOMWRU.jpg', id = 'logo_lomwru')))
+                  )
               ),
-              box(width = 7,
+              box(width = 6,
                   title = i18n$t("About the Lao AMC Dashboard"),
                   div(id = "app_version", app_version),
                   div(id = "selection_language", radioButtons('selected_language', label = NULL, choices = c("🇬🇧 English" = "en", "🇱🇦 Lao"= "la"), selected = "en", inline = TRUE)),
