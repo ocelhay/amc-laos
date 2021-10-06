@@ -19,9 +19,9 @@ ui <- dashboardPage(
       tabItem(tabName = "welcome",
               box(width = 6,
                   title = i18n$t("Lao AMC Dashboard: Explore Antimicrobial Consumption in Laos"),
-                  splitLayout(
-                    tags$img(src = './logos/MoH-logo.png', id = 'logo_moh'),
-                    tags$img(src = './logos/FDD-logo.png', id = 'logo_fdd')
+                  div(id = "logo_official",
+                      tags$img(src = './logos/MoH-logo.png', id = 'logo_moh'),
+                      tags$img(src = './logos/FDD-logo.jpeg', id = 'logo_fdd')
                   ),
                   br(),
                   leafletOutput("welcome_map", height = 350),
@@ -74,7 +74,6 @@ ui <- dashboardPage(
                                             conditionalPanel("input.selected_language == 'la'", includeMarkdown("./www/markdown/welcome_11_la.md"))))
               ) 
       ),
-      
       tabItem(tabName = "amc",
               box(width = 12,
                   title = span(icon("filter"), i18n$t("Filter Data:")),
@@ -124,34 +123,35 @@ ui <- dashboardPage(
                       )
                   )
               ),
-              box(
-                title = h4(i18n$t("Defined Daily Dose per patient encounter")),
-                highchartOutput("all_hosp_consum")
+              # First Row.
+              fluidRow(
+                box(width = 4,
+                    title = h4(i18n$t("Defined Daily Dose per patient encounter")),
+                    highchartOutput("all_hosp_consum")
+                ),
+                box(width = 4,
+                    title = h4(i18n$t("Antimicrobial consumptions based on AWaRe group")),
+                    highchartOutput("aware")
+                ),
+                box(width = 4,
+                    title = h4(i18n$t("Route of administration")),
+                    highchartOutput("route")
+                )
+              ),
+              # Second Row.
+              box(width = 4,
+                  title = h4(i18n$t("Most common antibiotic classes")),
+                  highchartOutput("consum_group")
               ),
               
-              box(
-                title = h4(i18n$t("Antimicrobial consumptions based on AWaRe group")),
-                highchartOutput("aware")
+              box(width = 8,
+                  title = h4(i18n$t("Most common antibiotics")),
+                  highchartOutput("consum_agent")
               ),
-              
-              box(
-                title = h4(i18n$t("Route of administration")),
-                highchartOutput("route")
-              ),
-              
-              box(
-                title = h4(i18n$t("Most common antibiotic classes")),
-                highchartOutput("consum_group")
-              ),
-              
-              box(
-                title = h4(i18n$t("Most common antibiotics")),
-                highchartOutput("consum_agent")
-              ),
-              
-              box(
-                title = h4(i18n$t("Breakdown of antimicrobial consumptions")),
-                DTOutput("table")
+              # Third Row.
+              box(width = 12,
+                  title = h4(i18n$t("Breakdown of antimicrobial consumptions")),
+                  DTOutput("table")
               )
       )
     )
