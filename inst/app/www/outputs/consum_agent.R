@@ -8,7 +8,7 @@ output$consum_agent <- renderHighchart({
     top_n(10)
   
   hchart(dta, type = "column", hcaes(x = substance, y = consum)) %>%
-    hc_yAxis(title = "Total DDD per patient encounter") %>% 
-    hc_xAxis(title = "Substance") %>%
+    hc_yAxis(title = list(text = "Total DDD per patient encounter")) %>% 
+    hc_xAxis(title = list(text = "Substance")) %>%
     hc_tooltip(headerFormat = "", pointFormat = "<strong>{point.substance}</strong><br>{point.consum} DDD per patient encounter")
 })

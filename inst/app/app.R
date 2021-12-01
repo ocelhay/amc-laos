@@ -9,7 +9,7 @@ ui <- dashboardPage(
   dashboardSidebar(minified = FALSE,
                    sidebarMenu(
                      menuItem("Welcome", tabName = "welcome"),
-                     menuItem("AMC Data", tabName = "amc", icon = icon("th"))
+                     menuItem("Hospital AMC Data", tabName = "amc", icon = icon("th"))
                    )
   ),
   dashboardBody(
@@ -90,6 +90,7 @@ ui <- dashboardPage(
                                                    selected = unique_hospital)
                         ),
                         column(4,
+                               p("Filter by selecting either an antibiotic class or an antibiotic in the dropdown lists:"),
                                pickerInput(inputId = "filter_act_3_name", label = i18n$t("Antibiotic class:"), multiple = TRUE,
                                            choices = unique_act_3_name, selected = unique_act_3_name,
                                            options = list(

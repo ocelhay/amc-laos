@@ -14,7 +14,7 @@ library(shinyWidgets)
 library(tidyverse)
 library(validate)
 
-app_version <- "v.0.3-beta - Data last updated on 24/03/2021"
+app_version <- "v.0.4-beta - Data last updated on 24/03/2021"
 
 # Lao Translation
 i18n <- Translator$new(translation_csvs_path = "./www/translation/")
@@ -34,14 +34,17 @@ coords <- read.csv("./www/data/hospital_geo_coordinates.csv", stringsAsFactors =
 
 shp_lao_provinces <- readOGR("./www/data/shapefiles/provinces.shp")
 
-
 amc_dta <- amc_dta %>%
   mutate(
     hospital = case_when(
       provinces == "Luang Natha" ~ "Luang Namtha Provincial Hospital",
       provinces == "Xiengkhuang" ~ "Xiengkhuang Provincial Hospital",
       provinces == "Salavan" ~ "Salavan Provincial Hospital"),
-    act_3_name = recode(act_3_name, "OTHER BETA-LACTAM ANTIBACTERIALS" = "Cephalosporins and carbapenems (and any others this includes)")) %>%
+    act_3_name = recode(act_3_name, 
+                        "OTHER BETA-LACTAM ANTIBACTERIALS" = "Cephalosporins and carbapenems (and any others this includes)",
+                        "BETA-LACTAM ANTIBACTERIALS, PENICILLINS" = "Penicillins"),
+    substance = recode(substance, 
+                        "Amoxicillin and enzyme inhibitor" = "Amoxicillin and clavulanic acid")) %>%
   mutate(
     act_3_name = str_to_sentence(act_3_name),
     route = recode(route, "O" = "Oral", "P" = "Parenteral", "R" = "Rectal")
@@ -54,5 +57,6 @@ aware_colors <- c("#18bc9c", "#f39c12", "#e74c3c")
 unique_year <- unique(amc_dta$data_collecting_year)
 unique_hospital <- unique(amc_dta$hospital)
 unique_act_3_name <- sort(unique(amc_dta$act_3_name))
+
 unique_substance <- sort(unique(amc_dta$substance))
 unique_route <- unique(amc_dta$route)

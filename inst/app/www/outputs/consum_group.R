@@ -8,7 +8,7 @@ output$consum_group <- renderHighchart({
     top_n(5)
   
   hchart(dta, type = "column", hcaes(x = act_3_name, y = consum)) %>%
-    hc_yAxis(title = "Total DDD per patient encounter") %>% 
-    hc_xAxis(title = "ACT3 - Antibiotic Group") %>%
+    hc_yAxis(title = list(text = "Total DDD per patient encounter")) %>% 
+    hc_xAxis(title = list(text = "ACT3 - Antibiotic Group")) %>%
     hc_tooltip(headerFormat = "", pointFormat = "<strong>{point.act_3_name}</strong><br>{point.consum} DDD per patient encounter")
 })

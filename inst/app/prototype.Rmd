@@ -133,8 +133,8 @@ dta <- amc_dta %>%
   summarise(consum = round(sum(dad), 1), .groups = "drop")
 
 hchart(dta, type = "column", hcaes(x = data_collecting_year, y = consum, group = hospital)) %>%
-  hc_yAxis(title = "Total DDD per patient encounter") %>% 
-  hc_xAxis(title = "Year, Hospital") %>%
+  hc_yAxis(title = list(text = "Total DDD per patient encounter")) %>% 
+  hc_xAxis(title = list(text = "Year, Hospital")) %>%
   hc_tooltip(headerFormat = "", pointFormat = "{point.consum} DDD per patient encounter<br> {point.hospital} {point.data_collecting_year}")
 ```
 
@@ -181,8 +181,8 @@ dta <- amc_dta %>%
   arrange(desc(consum))
 
 hchart(dta, type = "column", hcaes(x = act_3_name, y = consum)) %>%
-  hc_yAxis(title = "Total DDD per patient encounter") %>% 
-  hc_xAxis(title = "ACT3 - Antibiotic Group") %>%
+  hc_yAxis(title = list(text = "Total DDD per patient encounter")) %>% 
+  hc_xAxis(title = list(text = "ACT3 - Antibiotic Group")) %>%
   hc_tooltip(headerFormat = "", pointFormat = "{point.consum} DDD per patient encounter")
 ```
 
@@ -195,8 +195,8 @@ dta <- amc_dta %>%
   arrange(desc(consum))
 
 hchart(dta, type = "column", hcaes(x = substance, y = consum)) %>%
-  hc_yAxis(title = "Total DDD per patient encounter") %>% 
-  hc_xAxis(title = "Substance") %>%
+  hc_yAxis(title = list(text = "Total DDD per patient encounter")) %>% 
+  hc_xAxis(title = list(text = "Substance")) %>%
   hc_tooltip(headerFormat = "", pointFormat = "{point.consum} DDD per patient encounter")
 ```
 
